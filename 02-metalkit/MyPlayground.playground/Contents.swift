@@ -3,7 +3,31 @@ import MetalKit
 
 guard let device = MTLCreateSystemDefaultDevice() else { fatalError("gpu not supported") }
 
-let frame = CGRect(x: 0, y: 0, width: 600, height: 600)
+// how the sketch will work
+
+setup {
+    createCanvas(w: 600, h: 400)
+}
+
+draw {
+    sphere(r: 0.75, seg1: 100, seg2: 100)
+    // overload functions for choice? or just make a decision and stick with it?
+    // named parameters or no named parameters.
+    sphere(0.75, 100, 100)
+
+}
+
+
+
+// this is all the logic that will be abstracted away
+
+func createCanvas(w: Int, h: Int) {
+    frame = CGRect(x: 0, y: 0, width: w, height: h)
+}
+
+
+
+var frame = CGRect(x: 0, y: 0, width: 600, height: 600)
 let view = MTKView(frame: frame, device: device)
 
 //setting the background color as cream
@@ -46,6 +70,24 @@ let fragmentFunction = library.makeFunction(name: "fragment_main")
 
 
 
-print("yay")
+func setup(_ method: () -> Void) {
+    method()
+}
 
+func draw(_ method: () -> Void) {
+    method()
+}
 
+func sphere(r: Float, seg1: Int, seg2: Int) {
+    let mdlMesh = MDLMesh(sphereWithExtent: [r, r, r], segments: [UInt32(seg1), UInt32(seg2)], inwardNormals: false, geometryType: .triangles, allocator: allocator)
+    guard let mesh = try? MTKMesh(mesh: mdlMesh, device: device) else { return }
+    
+    //draw sphere after this
+}
+
+func sphere(_ r: Float, _ seg1: Int, _ seg2: Int) {
+    let mdlMesh = MDLMesh(sphereWithExtent: [r, r, r], segments: [UInt32(seg1), UInt32(seg2)], inwardNormals: false, geometryType: .triangles, allocator: allocator)
+    guard let mesh = try? MTKMesh(mesh: mdlMesh, device: device) else { return }
+    
+    //draw sphere after this
+}

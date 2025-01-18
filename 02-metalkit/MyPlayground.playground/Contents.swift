@@ -1,49 +1,39 @@
-import PlaygroundSupport
 import MetalKit
+import Foundation
 
-guard let device = MTLCreateSystemDefaultDevice() else { fatalError("gpu not supported") }
+guard let device = MTLCreateSystemDefaultDevice() else { fatalError("gpu not supported")}
 
-// how the sketch will work
+print(device.name)
 
-setup {
-    createCanvas(w: 600, h: 400)
-}
+//lets create a frame
 
-draw {
-    sphere(r: 0.75, seg1: 100, seg2: 100)
-    // overload functions for choice? or just make a decision and stick with it?
-    // named parameters or no named parameters.
-    sphere(0.75, 100, 100)
-
-}
-
-
-
-// this is all the logic that will be abstracted away
-
-func createCanvas(w: Int, h: Int) {
-    frame = CGRect(x: 0, y: 0, width: w, height: h)
-}
-
-
-
-var frame = CGRect(x: 0, y: 0, width: 600, height: 600)
+let frame = CGRect(x: 0, y: 0, width: 600, height: 600)
 let view = MTKView(frame: frame, device: device)
+// a background color for the view, it's a cream color.
+view.clearColor = MTLClearColor(red: 1, green: 1, blue: 0.8, alpha: 1)
 
-//setting the background color as cream
-view.clearColor = MTLClearColor(red: 1.0, green: 1.0, blue: 0.8, alpha: 1.0)
-
-//buffer to manage memory of our model i/o mesh
+//using model i/o to load 3d models
+// allocator manages the memory for the mesh data
 let allocator = MTKMeshBufferAllocator(device: device)
-//creating a model i/o mesh, a sphere
+// model i/o creates a sphere with the following properties, and
+// stores the information in the buffer (the constant named allocator)
 let mdlMesh = MDLMesh(sphereWithExtent: [0.75, 0.75, 0.75], segments: [100, 100], inwardNormals: false, geometryType: .triangles, allocator: allocator)
+// in order for Metal to be able to use this mesh, we convert it
+// to a MetalKit Mesh
 let mesh = try MTKMesh(mesh: mdlMesh, device: device)
 
-//queues, buffers, and encoders
 
-guard let commandQueue = device.makeCommandQueue() else { fatalError("command queue could not be created.") }
+// queues, buffers and encoders
+//generally, the commandQueue and the device should be created at the start of the app.
+//you should use the same device and command queue throughout the app
+// command queue => command buffer => command encoder
+// each frame will have a list of commands in a command encoder.
+// the command buffer will organize these commands in the encoder.
+// the command queue will organize the command buffers.
+guard let commandQueue = device.makeCommandQueue() else { fatalError("could not create Command Queue") }
 
-//creating vertex and frag shaders. this would typically go in a different file with a .metal extension.
+// shaders
+//this is the vertex and frag shader
 let shader = """
 #include <metal_stdlib>
 using namespace metal;
@@ -58,36 +48,31 @@ vertex float4 vertex_main(const VertexIn vertex_in [[stage_in]])
 }
 
 fragment float4 fragment_main() {
-    return float4(1, 0, 0, 1);
+    return float4(1,0,0,1);
 }
-
 """
 
-//making a library of our shader, and then making functions of the vert and frag shaders.
+//to use these shaders, we need to set up a metal library.
+
 let library = try device.makeLibrary(source: shader, options: nil)
+
 let vertexFunction = library.makeFunction(name: "vertex_main")
 let fragmentFunction = library.makeFunction(name: "fragment_main")
 
+// pipeline state
+//this is where we set pu a pipeline state for the gpu.
+
+// by setting this state, we tell the gpu that nothing will change unless the state changes.
+
+// the pipeline state holds the information about the pixel format and other things
+// that the gpu needs knowledge of
+// We don't create the pipeline state directly, we so so by using a descriptor
+
+let pipelineDescriptor = MTLRenderPipelineDescriptor()
+// pixel format is 8 unsigned integers in blue, green, red, alpha order
+pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+//we also add the shader functions to the pipeline descriptor
+pipelineDescriptor.vertexFunction = vertexFunction
+pipelineDescriptor.fragmentFunction = fragmentFunction
 
 
-func setup(_ method: () -> Void) {
-    method()
-}
-
-func draw(_ method: () -> Void) {
-    method()
-}
-
-func sphere(r: Float, seg1: Int, seg2: Int) {
-    let mdlMesh = MDLMesh(sphereWithExtent: [r, r, r], segments: [UInt32(seg1), UInt32(seg2)], inwardNormals: false, geometryType: .triangles, allocator: allocator)
-    guard let mesh = try? MTKMesh(mesh: mdlMesh, device: device) else { return }
-    
-    //draw sphere after this
-}
-
-func sphere(_ r: Float, _ seg1: Int, _ seg2: Int) {
-    let mdlMesh = MDLMesh(sphereWithExtent: [r, r, r], segments: [UInt32(seg1), UInt32(seg2)], inwardNormals: false, geometryType: .triangles, allocator: allocator)
-    guard let mesh = try? MTKMesh(mesh: mdlMesh, device: device) else { return }
-    
-    //draw sphere after this
-}

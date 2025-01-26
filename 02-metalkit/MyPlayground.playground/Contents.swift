@@ -1,5 +1,8 @@
 import MetalKit
 import Foundation
+import PlaygroundSupport
+
+
 
 guard let device = MTLCreateSystemDefaultDevice() else { fatalError("gpu not supported")}
 
@@ -48,7 +51,7 @@ vertex float4 vertex_main(const VertexIn vertex_in [[stage_in]])
 }
 
 fragment float4 fragment_main() {
-    return float4(1,0,0,1);
+    return float4(1,0,0.7,1);
 }
 """
 
@@ -60,7 +63,7 @@ let vertexFunction = library.makeFunction(name: "vertex_main")
 let fragmentFunction = library.makeFunction(name: "fragment_main")
 
 // pipeline state
-//this is where we set pu a pipeline state for the gpu.
+//this is where we set up a pipeline state for the gpu.
 
 // by setting this state, we tell the gpu that nothing will change unless the state changes.
 
@@ -75,4 +78,30 @@ pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
 pipelineDescriptor.vertexFunction = vertexFunction
 pipelineDescriptor.fragmentFunction = fragmentFunction
 
+pipelineDescriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(mesh.vertexDescriptor)
 
+let pipelineState = try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
+
+guard let commandBuffer = commandQueue.makeCommandBuffer(),
+      let renderPassDescriptor = view.currentRenderPassDescriptor,
+      let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else {
+    fatalError()
+}
+
+renderEncoder.setRenderPipelineState(pipelineState)
+renderEncoder.setVertexBuffer(mesh.vertexBuffers[0].buffer, offset: 0, index: 0)
+
+guard let submesh = mesh.submeshes.first else {
+    fatalError()
+}
+
+renderEncoder.drawIndexedPrimitives(type: .line, indexCount: submesh.indexCount, indexType: submesh.indexType, indexBuffer: submesh.indexBuffer.buffer, indexBufferOffset: 0)
+
+renderEncoder.endEncoding()
+
+guard let drawable = view.currentDrawable else { fatalError() }
+
+commandBuffer.present(drawable)
+commandBuffer.commit()
+
+PlaygroundPage.current.liveView = view

@@ -1,23 +1,36 @@
 import PlaygroundSupport
 import MetalKit
+import SwiftUI
 
 guard let device = MTLCreateSystemDefaultDevice() else {
   fatalError("GPU is not supported")
 }
 
+
 let frame = CGRect(x: 0, y: 0, width: 600, height: 600)
 let view = MTKView(frame: frame, device: device)
-view.clearColor = MTLClearColor(red: 1,
-  green: 1, blue: 0.8, alpha: 1)
+view.clearColor = MTLClearColor(red: 0.1,
+                                green: 0.1, blue: 0.3, alpha: 1)
 
 let allocator = MTKMeshBufferAllocator(device: device)
-let mdlMesh = MDLMesh(
-  sphereWithExtent: [0.75, 0.75, 0.75],
-  segments: [100, 100],
-  inwardNormals: false,
-  geometryType: .triangles,
-  allocator: allocator)
+let mdlMesh = MDLMesh(coneWithExtent: [1, 1, 1], segments: [10, 10], inwardNormals: false, cap: true, geometryType: .triangles, allocator: allocator)
 let mesh = try MTKMesh(mesh: mdlMesh, device: device)
+
+let asset = MDLAsset()
+asset.add(mdlMesh)
+
+let fileExtension = "usda"
+guard MDLAsset.canExportFileExtension(fileExtension) else { fatalError("Could not export mesh") }
+
+
+///Exporting Models
+do {
+    let url = playgroundSharedDataDirectory
+        .appendingPathComponent("primitive.\(fileExtension)")
+    try asset.export(to: url)
+} catch {
+    fatalError("Error: \(error.localizedDescription)")
+}
 
 guard let commandQueue = device.makeCommandQueue() else {
   fatalError("Could not create a command queue")
@@ -36,7 +49,7 @@ vertex float4 vertex_main(const VertexIn vertex_in [[stage_in]]) {
 }
 
 fragment float4 fragment_main() {
-  return float4(1, 0, 0, 1);
+  return float4(1, 0, 0.8, 1);
 }
 """
 
@@ -66,12 +79,14 @@ renderEncoder.setRenderPipelineState(pipelineState)
 renderEncoder.setVertexBuffer(
   mesh.vertexBuffers[0].buffer, offset: 0, index: 0)
 
+renderEncoder.setTriangleFillMode(.lines)
+
 guard let submesh = mesh.submeshes.first else {
   fatalError()
 }
 
 renderEncoder.drawIndexedPrimitives(
-  type: .triangle,
+    type: .triangle,
   indexCount: submesh.indexCount,
   indexType: submesh.indexType,
   indexBuffer: submesh.indexBuffer.buffer,
@@ -85,3 +100,5 @@ commandBuffer.present(drawable)
 commandBuffer.commit()
 
 PlaygroundPage.current.liveView = view
+
+

@@ -95,7 +95,7 @@ guard let submesh = mesh.submeshes.first else {
     fatalError()
 }
 
-renderEncoder.drawIndexedPrimitives(type: .line, indexCount: submesh.indexCount, indexType: submesh.indexType, indexBuffer: submesh.indexBuffer.buffer, indexBufferOffset: 0)
+renderEncoder.drawIndexedPrimitives(type: .lineStrip, indexCount: submesh.indexCount, indexType: submesh.indexType, indexBuffer: submesh.indexBuffer.buffer, indexBufferOffset: 0)
 
 renderEncoder.endEncoding()
 

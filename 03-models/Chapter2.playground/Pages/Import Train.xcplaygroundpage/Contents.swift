@@ -11,13 +11,18 @@ view.clearColor = MTLClearColor(red: 1,
   green: 1, blue: 0.8, alpha: 1)
 
 let allocator = MTKMeshBufferAllocator(device: device)
-let mdlMesh = MDLMesh(
-  coneWithExtent: [1, 1, 1],
-  segments: [10, 10],
-  inwardNormals: false,
-  cap: true,
-  geometryType: .triangles,
-  allocator: allocator)
+
+guard let assetURL = Bundle.main.url(forResource: "train", withExtension: "usdz") else { fatalError("Could not load resource") }
+
+let vertexDescriptor = MTLVertexDescriptor()
+vertexDescriptor.attributes[0].format = .float3
+vertexDescriptor.attributes[0].offset = 0
+vertexDescriptor.attributes[0].bufferIndex = 0
+
+vertexDescriptor.layouts[0].stride = MemoryLayout<SIMD3<Float>>.stride
+
+let meshDescriptor = MTKModelIOVertexDescriptorFromMetal(vertexDescriptor)
+(meshDescriptor.attributes[0] as! MDLVertexAttribute).name
 
 let mesh = try MTKMesh(mesh: mdlMesh, device: device)
 

@@ -9,8 +9,8 @@ guard let device = MTLCreateSystemDefaultDevice() else {
 
 let frame = CGRect(x: 0, y: 0, width: 600, height: 600)
 let view = MTKView(frame: frame, device: device)
-view.clearColor = MTLClearColor(red: 0.1,
-                                green: 0.1, blue: 0.3, alpha: 1)
+view.clearColor = MTLClearColor(red: 0.2,
+                                green: 0.2, blue: 0.9, alpha: 1)
 
 let allocator = MTKMeshBufferAllocator(device: device)
 let mdlMesh = MDLMesh(coneWithExtent: [1, 1, 1], segments: [10, 10], inwardNormals: false, cap: true, geometryType: .triangles, allocator: allocator)
@@ -49,7 +49,7 @@ vertex float4 vertex_main(const VertexIn vertex_in [[stage_in]]) {
 }
 
 fragment float4 fragment_main() {
-  return float4(1, 0, 0.8, 1);
+  return float4(0.1, 0.05, 0.4, 1);
 }
 """
 

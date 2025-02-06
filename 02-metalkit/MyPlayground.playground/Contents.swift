@@ -12,6 +12,7 @@ print(device.name)
 
 let frame = CGRect(x: 0, y: 0, width: 600, height: 600)
 let view = MTKView(frame: frame, device: device)
+
 // a background color for the view, it's a cream color.
 view.clearColor = MTLClearColor(red: 1, green: 1, blue: 0.8, alpha: 1)
 

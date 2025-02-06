@@ -42,5 +42,5 @@ struct ContentView: UIViewRepresentable {
 }
 
 #Preview {
-    ContentView()
+    AppView()
 }
